@@ -5,13 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import shamil.lifeeventreminder.models.Dto.Login;
-import shamil.lifeeventreminder.models.User;
+import shamil.lifeeventreminder.models.dto.LoginDto;
+import shamil.lifeeventreminder.models.dto.UserDto;
 import shamil.lifeeventreminder.services.UserService;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user/")
@@ -32,8 +33,8 @@ public class UserController {
     @GetMapping("{id}")
     public ResponseEntity<Map<String, Object>> getUserById(@PathVariable long id) {
         Map<String, Object> map = new HashMap<>();
-        User user = userService.getUserById(id);
-        if (user != null) {
+        Optional<UserDto> user = userService.getUserById(id);
+        if (user.isPresent()) {
             map.put("data", user);
             map.put("status", "success");
             return new ResponseEntity<>(map, HttpStatus.OK);
@@ -45,19 +46,26 @@ public class UserController {
     }
 
     @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> addUser(@RequestBody User user) {
+    public ResponseEntity<Map<String, Object>> addUser(@RequestBody UserDto user) {
         Map<String, Object> map = new HashMap<>();
-        map.put("data", userService.addUser(user));
+        UserDto userDto = userService.addUser(user);
+        if (userDto != null) {
+            map.put("data", userDto);
+            map.put("status", "success");
+        } else {
+            map.put("status", "failed");
+            map.put("data", "User with email '" + user.getEmail() + "' doesn't exists");
+        }
         return new ResponseEntity<>(map, HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody Login login) {
+    @PostMapping(value = "login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody LoginDto login) {
         return new ResponseEntity<>(userService.userLogin(login), HttpStatus.CREATED);
     }
 
     @PutMapping(value = "{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> editUser(@PathVariable long id, @RequestBody User user) {
+    public ResponseEntity<Map<String, Object>> editUser(@PathVariable long id, @RequestBody UserDto user) {
         Map<String, Object> map = new HashMap<>();
         map.put("data", userService.editUser(user, id));
         return new ResponseEntity<>(map, HttpStatus.ACCEPTED);
@@ -74,8 +82,6 @@ public class UserController {
             return new ResponseEntity<>(map, HttpStatus.NO_CONTENT);
         }
     }
-
-
 
 
 }

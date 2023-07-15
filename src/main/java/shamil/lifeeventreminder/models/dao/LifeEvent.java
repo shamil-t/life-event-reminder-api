@@ -1,4 +1,4 @@
-package shamil.lifeeventreminder.models;
+package shamil.lifeeventreminder.models.dao;
 
 import jakarta.persistence.*;
 import lombok.Data;
