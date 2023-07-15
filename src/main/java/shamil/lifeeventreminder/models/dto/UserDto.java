@@ -1,20 +1,20 @@
-package shamil.lifeeventreminder.models;
+package shamil.lifeeventreminder.models.dto;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 @Data
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class UserDto {
     private long id;
     private String fName;
     private String lName;
     private String email;
     private String phone;
-    private String password;
     private String designation;
     private String profileImg;
     private long mangerId;
+    private UserDto manager;
 }

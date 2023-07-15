@@ -2,8 +2,9 @@ package shamil.lifeeventreminder.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import shamil.lifeeventreminder.models.Dto.Login;
-import shamil.lifeeventreminder.models.User;
+import shamil.lifeeventreminder.models.dao.User;
+import shamil.lifeeventreminder.models.dto.LoginDto;
+import shamil.lifeeventreminder.models.dto.UserDto;
 import shamil.lifeeventreminder.repositories.IUserRepository;
 
 import java.util.*;
@@ -13,25 +14,40 @@ public class UserService {
     @Autowired
     private IUserRepository userRepository;
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        List<UserDto> users = new ArrayList<>();
+        List<User> allUsers = userRepository.findAll();
+        allUsers.forEach(user -> {
+            users.add(dataToWeb(user));
+        });
+        return users;
     }
 
-    public User addUser(User user) {
-        return userRepository.save(user);
+    public UserDto addUser(UserDto user) {
+        UserDto userDto = new UserDto();
+        try {
+            userDto = dataToWeb(userRepository.save((dataToDB(user))));
+            return userDto;
+        } catch (Exception ex) {
+            System.out.println("Add User Exception :: " + ex.getMessage());
+            return null;
+        }
     }
 
-    public User getUserById(long id) {
-        return userRepository.findById(id).orElse(null);
+    public Optional<UserDto> getUserById(long id) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user != null)
+            return Optional.of(dataToWeb(user));
+        else return Optional.empty();
     }
 
-    public Map<String, Object> userLogin(Login login) {
+    public Map<String, Object> userLogin(LoginDto login) {
         Map<String, Object> map = new HashMap<>();
         User user = userRepository.findByEmail(login.getEmail()).orElse(null);
         if (user != null) {
             if (Objects.equals(user.getPassword(), login.getPassword())) {
                 map.put("status", "success");
-                map.put("data", user);
+                map.put("data", dataToWeb(user));
             } else {
                 map.put("status", "failure");
                 map.put("data", "incorrect password");
@@ -43,7 +59,7 @@ public class UserService {
         return map;
     }
 
-    public User editUser(User user, long id) {
+    public UserDto editUser(UserDto user, long id) {
         User u = userRepository.findById(id).orElse(null);
         if (u != null) {
             u.setDesignation(user.getDesignation());
@@ -52,16 +68,20 @@ public class UserService {
             u.setLName(user.getLName());
             u.setMangerId(user.getMangerId());
             u.setProfileImg(user.getProfileImg());
-            u.setPassword(user.getPassword());
             u.setPhone(user.getPhone());
-            return userRepository.save(u);
+            return dataToWeb(userRepository.save(u));
         } else {
             return null;
         }
     }
 
-    public List<User> getUsersByManager(long id) {
-        return userRepository.findAll().stream().filter(user -> user.getMangerId() == id).toList();
+    public List<UserDto> getUsersByManager(long id) {
+        List<UserDto> users = new ArrayList<>();
+        List<User> allUsers = userRepository.findAll().stream().filter(user -> user.getMangerId() == id).toList();
+        allUsers.forEach(u -> {
+            users.add(dataToWeb(u));
+        });
+        return users;
     }
 
     public boolean deleteUser(long id) {
@@ -71,5 +91,31 @@ public class UserService {
             return true;
         } else
             return false;
+    }
+
+
+    private User dataToDB(UserDto _user) {
+        User user = new User();
+        user.setFName(_user.getFName());
+        user.setLName(_user.getLName());
+        user.setEmail(_user.getEmail());
+        user.setDesignation(_user.getDesignation());
+        user.setMangerId(_user.getMangerId());
+        user.setPhone(_user.getPhone());
+        System.out.println("_user = " + _user.getPhone());
+        return user;
+    }
+
+    private UserDto dataToWeb(User _user) {
+        UserDto userDto = new UserDto();
+        userDto.setEmail(_user.getEmail());
+        userDto.setDesignation(_user.getDesignation());
+        userDto.setFName(_user.getFName());
+        userDto.setLName(_user.getLName());
+        userDto.setPhone(_user.getPhone());
+        userDto.setProfileImg(_user.getProfileImg());
+        UserDto user = getUserById(_user.getMangerId()).orElse(null);
+        userDto.setManager(user);
+        return userDto;
     }
 }
